@@ -243,7 +243,10 @@ open class PieRadarChartViewBase: ChartViewBase
         let offsetRight = max(minOffset, legendRight)
         let offsetBottom = max(minOffset, max(self.requiredBaseOffset, legendBottom))
 
-        viewPortHandler.restrainViewPort(offsetLeft: offsetLeft, offsetTop: offsetTop, offsetRight: offsetRight, offsetBottom: offsetBottom)
+//        viewPortHandler.restrainViewPort(offsetLeft: offsetLeft, offsetTop: offsetTop, offsetRight: offsetRight, offsetBottom: offsetBottom)
+        
+        /// 自定义顶部边距
+        viewPortHandler.restrainViewPort(offsetLeft: offsetLeft, offsetTop: 0, offsetRight: offsetRight, offsetBottom: 0)
     }
 
     /// - Returns: The angle relative to the chart center for the given point on the chart in degrees.

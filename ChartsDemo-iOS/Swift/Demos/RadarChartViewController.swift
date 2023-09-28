@@ -11,164 +11,114 @@
 #endif
 import DGCharts
 
-class RadarChartViewController: DemoBaseViewController {
+class RadarChartViewController: UIViewController {
 
-    @IBOutlet var chartView: RadarChartView!
+    var chartView = RadarChartView()
     
-    let activities = ["Burger", "Steak", "Salad", "Pasta", "Pizza"]
+    let activities = ["抬主轮时空速", "抬轮空速与VR差值", "起飞滚转角", "抬主轮时pitch值", "抬主轮时最大俯仰变化率", "抬主轮时俯仰变化率", "抬主轮时地速"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
-        self.title = "Radar Chart"
-        self.options = [.toggleValues,
-                        .toggleHighlight,
-                        .toggleHighlightCircle,
-                        .toggleXLabels,
-                        .toggleYLabels,
-                        .toggleRotate,
-                        .toggleFilled,
-                        .animateX,
-                        .animateY,
-                        .animateXY,
-                        .spin,
-                        .saveToGallery,
-                        .toggleData]
+        self.view.backgroundColor = .white
         
-        chartView.delegate = self
-        
-        chartView.chartDescription.enabled = false
+        //创建折线图组件对象
         chartView.webLineWidth = 1
         chartView.innerWebLineWidth = 1
-        chartView.webColor = .lightGray
-        chartView.innerWebColor = .lightGray
-        chartView.webAlpha = 1
-        
+        chartView.rotationEnabled = false
+        chartView.setExtraOffsets(left: 0, top: 0, right: 0, bottom: 0)
+        chartView.frame = CGRect(x: 0, y: 100, width: self.view.bounds.width,
+                                 height: self.view.bounds.width - 100)
+//        chartView.backgroundColor = .orange.withAlphaComponent(0.4)
+        self.view.addSubview(chartView)
+        //维度标签文字
+        chartView.xAxis.valueFormatter = self
+//        chartView.legend.enabled = false
+        let legend = chartView.legend
+        legend.verticalAlignment = .top
+        legend.horizontalAlignment = .right
+        legend.xOffset = -40
+        legend.formLineWidth = 10
+        legend.formSize = 18
+        legend.form = .line
         let marker = RadarMarkerView.viewFromXib()!
         marker.chartView = chartView
         chartView.marker = marker
         
-        let xAxis = chartView.xAxis
-        xAxis.labelFont = .systemFont(ofSize: 9, weight: .light)
-        xAxis.xOffset = 0
-        xAxis.yOffset = 0
-        xAxis.valueFormatter = self
-        xAxis.labelTextColor = .white
-        
+        //最小、最大刻度值
         let yAxis = chartView.yAxis
-        yAxis.labelFont = .systemFont(ofSize: 9, weight: .light)
-        yAxis.labelCount = 5
+        yAxis.drawLabelsEnabled = false //不显示刻度值
+        yAxis.labelFont = .systemFont(ofSize: 10)
         yAxis.axisMinimum = 0
-        yAxis.axisMaximum = 80
-        yAxis.drawLabelsEnabled = false
+        yAxis.axisMaximum = 4
+        yAxis.labelCount = 4
         
-        let l = chartView.legend
-        l.horizontalAlignment = .center
-        l.verticalAlignment = .top
-        l.orientation = .horizontal
-        l.drawInside = false
-        l.font = .systemFont(ofSize: 10, weight: .light)
-        l.xEntrySpace = 7
-        l.yEntrySpace = 5
-        l.textColor = .white
-//        chartView.legend = l
+        let xAxis = chartView.xAxis
+        xAxis.axisMinimum = 0
+        xAxis.axisMaximum = 4
+//        xAxis.spaceMin = 0
+        xAxis.labelCount = 4
+        xAxis.wordWrapEnabled = true
+        xAxis.labelRotatedWidth = 0
+//        xAxis.labelPosition = .bottom
+        xAxis.labelFont = .systemFont(ofSize: 10)
+        xAxis.labelTextColor = .white
 
-        self.updateChartData()
+    
+        let data1: [Double] = [5, 4, 5, 5, 5, 4, 5]
+        let data2: [Double] = [5, 5, 0, 5, 5, 5, 5]
+        let entries1 = data1.map({RadarChartDataEntry(value: $0)})
+        let entries2 = data2.map({RadarChartDataEntry(value: $0)})
         
+        //生成两组数据
+        let chartDataSet1 = RadarChartDataSet(entries: entries1, label: "个人")
+        chartDataSet1.setColor(UIColor(red: 188/255.0, green: 98/255.0, blue: 88/255.0, alpha: 1))
+        chartDataSet1.lineWidth = 1.5
+        let chartDataSet2 = RadarChartDataSet(entries: entries2, label: "机队")
+        chartDataSet2.setColor(UIColor(red: 55/255.0, green: 68/255.0, blue: 82/255.0, alpha: 1))
+        chartDataSet2.lineWidth = 1.5
+        //目前雷达图包括2组数据
+        let chartData = RadarChartData(dataSets: [chartDataSet1, chartDataSet2])
+        chartData.setDrawValues(false) //不显示值标签
+        chartDataSet1.drawHighlightCircleEnabled = true //选中后显示圆圈
+        chartDataSet1.setDrawHighlightIndicators(false) //选中后不显示十字线
+        
+        chartDataSet2.drawHighlightCircleEnabled = true //选中后显示圆圈
+        chartDataSet2.setDrawHighlightIndicators(false) //选中后不显示十字线
+        
+        //设置雷达图数据
+        chartView.data = chartData
         chartView.animate(xAxisDuration: 1.4, yAxisDuration: 1.4, easingOption: .easeOutBack)
     }
 
-    override func updateChartData() {
-        if self.shouldHideData {
-            chartView.data = nil
-            return
-        }
-        
-        self.setChartData()
-    }
     
     func setChartData() {
-        let mult: UInt32 = 80
-        let min: UInt32 = 20
-        let cnt = 5
+        return
+        let data1: [Double] = [5, 4, 5, 5, 5, 4, 5]
+        let data2: [Double] = [5, 5, 0, 5, 5, 5, 5]
+        let entries1 = data1.map({RadarChartDataEntry(value: $0)})
+        let entries2 = data2.map({RadarChartDataEntry(value: $0)})
         
-        let block: (Int) -> RadarChartDataEntry = { _ in return RadarChartDataEntry(value: Double(arc4random_uniform(mult) + min))}
-        let entries1 = (0..<cnt).map(block)
-        let entries2 = (0..<cnt).map(block)
+        //生成两组数据
+        let chartDataSet1 = RadarChartDataSet(entries: entries1, label: "个人")
+        chartDataSet1.setColor(UIColor(red: 188/255.0, green: 98/255.0, blue: 88/255.0, alpha: 1))
+        chartDataSet1.lineWidth = 1.5
+        let chartDataSet2 = RadarChartDataSet(entries: entries2, label: "机队")
+        chartDataSet2.setColor(UIColor(red: 55/255.0, green: 68/255.0, blue: 82/255.0, alpha: 1))
+        chartDataSet2.lineWidth = 1.5
+        //目前雷达图包括2组数据
+        let chartData = RadarChartData(dataSets: [chartDataSet1, chartDataSet2])
+        chartData.setDrawValues(false) //不显示值标签
+        chartDataSet1.drawHighlightCircleEnabled = true //选中后显示圆圈
+        chartDataSet1.setDrawHighlightIndicators(false) //选中后不显示十字线
         
-        let set1 = RadarChartDataSet(entries: entries1, label: "Last Week")
-        set1.setColor(UIColor(red: 103/255, green: 110/255, blue: 129/255, alpha: 1))
-        set1.fillColor = UIColor(red: 103/255, green: 110/255, blue: 129/255, alpha: 1)
-        set1.drawFilledEnabled = true
-        set1.fillAlpha = 0.7
-        set1.lineWidth = 2
-        set1.drawHighlightCircleEnabled = true
-        set1.setDrawHighlightIndicators(false)
+        chartDataSet2.drawHighlightCircleEnabled = true //选中后显示圆圈
+        chartDataSet2.setDrawHighlightIndicators(false) //选中后不显示十字线
         
-        let set2 = RadarChartDataSet(entries: entries2, label: "This Week")
-        set2.setColor(UIColor(red: 121/255, green: 162/255, blue: 175/255, alpha: 1))
-        set2.fillColor = UIColor(red: 121/255, green: 162/255, blue: 175/255, alpha: 1)
-        set2.drawFilledEnabled = true
-        set2.fillAlpha = 0.7
-        set2.lineWidth = 2
-        set2.drawHighlightCircleEnabled = true
-        set2.setDrawHighlightIndicators(false)
-        
-        let data: RadarChartData = [set1, set2]
-        data.setValueFont(.systemFont(ofSize: 8, weight: .light))
-        data.setDrawValues(false)
-        data.setValueTextColor(.white)
-        
-        chartView.data = data
+        //设置雷达图数据
+        chartView.data = chartData
     }
     
-    override func optionTapped(_ option: Option) {
-        guard let data = chartView.data else { return }
-
-        switch option {
-        case .toggleXLabels:
-            chartView.xAxis.drawLabelsEnabled = !chartView.xAxis.drawLabelsEnabled
-            chartView.data?.notifyDataChanged()
-            chartView.notifyDataSetChanged()
-            chartView.setNeedsDisplay()
-            
-        case .toggleYLabels:
-            chartView.yAxis.drawLabelsEnabled = !chartView.yAxis.drawLabelsEnabled
-            chartView.setNeedsDisplay()
-
-        case .toggleRotate:
-            chartView.rotationEnabled = !chartView.rotationEnabled
-            
-        case .toggleFilled:
-            for case let set as RadarChartDataSet in data {
-                set.drawFilledEnabled = !set.drawFilledEnabled
-            }
-            
-            chartView.setNeedsDisplay()
-            
-        case .toggleHighlightCircle:
-            for case let set as RadarChartDataSet in data {
-                set.drawHighlightCircleEnabled = !set.drawHighlightCircleEnabled
-            }
-            chartView.setNeedsDisplay()
-
-        case .animateX:
-            chartView.animate(xAxisDuration: 1.4)
-            
-        case .animateY:
-            chartView.animate(yAxisDuration: 1.4)
-            
-        case .animateXY:
-            chartView.animate(xAxisDuration: 1.4, yAxisDuration: 1.4)
-            
-        case .spin:
-            chartView.spin(duration: 2, fromAngle: chartView.rotationAngle, toAngle: chartView.rotationAngle + 360, easingOption: .easeInCubic)
-            
-        default:
-            super.handleOption(option, forChartView: chartView)
-        }
-    }
+    func optionTapped(_ option: Option) {}
 }
 
 extension RadarChartViewController: AxisValueFormatter {
@@ -176,3 +126,4 @@ extension RadarChartViewController: AxisValueFormatter {
         return activities[Int(value) % activities.count]
     }
 }
+
