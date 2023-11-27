@@ -175,59 +175,59 @@ extension CGContext
         }
     }
     
-//    public func drawText(_ text: String, at point: CGPoint, anchor: CGPoint = CGPoint(x: 0.5, y: 0.5), angleRadians: CGFloat, attributes: [NSAttributedString.Key : Any]?)
-//    {
-//        var drawOffset = CGPoint()
-//
-//        NSUIGraphicsPushContext(self)
-//
-//        if angleRadians != 0.0
-//        {
-//            let size = text.size(withAttributes: attributes)
-//
-//            // Move the text drawing rect in a way that it always rotates around its center
-//            drawOffset.x = -size.width * 0.5
-//            drawOffset.y = -size.height * 0.5
-//
-//            var translate = point
-//
-//            // Move the "outer" rect relative to the anchor, assuming its centered
-//            if anchor.x != 0.5 || anchor.y != 0.5
-//            {
-//                let rotatedSize = size.rotatedBy(radians: angleRadians)
-//
-//                translate.x -= rotatedSize.width * (anchor.x - 0.5)
-//                translate.y -= rotatedSize.height * (anchor.y - 0.5)
-//            }
-//
-//            saveGState()
-//            translateBy(x: translate.x, y: translate.y)
-//            rotate(by: angleRadians)
-//
-//            (text as NSString).draw(at: drawOffset, withAttributes: attributes)
-//
-//            restoreGState()
-//        }
-//        else
-//        {
-//            if anchor.x != 0.0 || anchor.y != 0.0
-//            {
-//                let size = text.size(withAttributes: attributes)
-//
-//                drawOffset.x = -size.width * anchor.x
-//                drawOffset.y = -size.height * anchor.y
-//            }
-//
-//            drawOffset.x += point.x
-//            drawOffset.y += point.y
-//
-//            (text as NSString).draw(at: drawOffset, withAttributes: attributes)
-//        }
-//
-//        NSUIGraphicsPopContext()
-//    }
-    
     public func drawText(_ text: String, at point: CGPoint, anchor: CGPoint = CGPoint(x: 0.5, y: 0.5), angleRadians: CGFloat, attributes: [NSAttributedString.Key : Any]?)
+    {
+        var drawOffset = CGPoint()
+
+        NSUIGraphicsPushContext(self)
+
+        if angleRadians != 0.0
+        {
+            let size = text.size(withAttributes: attributes)
+
+            // Move the text drawing rect in a way that it always rotates around its center
+            drawOffset.x = -size.width * 0.5
+            drawOffset.y = -size.height * 0.5
+
+            var translate = point
+
+            // Move the "outer" rect relative to the anchor, assuming its centered
+            if anchor.x != 0.5 || anchor.y != 0.5
+            {
+                let rotatedSize = size.rotatedBy(radians: angleRadians)
+
+                translate.x -= rotatedSize.width * (anchor.x - 0.5)
+                translate.y -= rotatedSize.height * (anchor.y - 0.5)
+            }
+
+            saveGState()
+            translateBy(x: translate.x, y: translate.y)
+            rotate(by: angleRadians)
+
+            (text as NSString).draw(at: drawOffset, withAttributes: attributes)
+
+            restoreGState()
+        }
+        else
+        {
+            if anchor.x != 0.0 || anchor.y != 0.0
+            {
+                let size = text.size(withAttributes: attributes)
+
+                drawOffset.x = -size.width * anchor.x
+                drawOffset.y = -size.height * anchor.y
+            }
+
+            drawOffset.x += point.x
+            drawOffset.y += point.y
+
+            (text as NSString).draw(at: drawOffset, withAttributes: attributes)
+        }
+
+        NSUIGraphicsPopContext()
+    }
+
+    public func drawText(_ text: String, at point: CGPoint, anchor: CGPoint = CGPoint(x: 0.5, y: 0.5), angleRadians: CGFloat, attributes: [NSAttributedString.Key : Any]?, chartPoint: CGPoint, chartWidth: CGFloat, positionType: ItemPositionType)
     {
         var drawOffset = CGPoint()
         
@@ -262,9 +262,14 @@ extension CGContext
         }
         else
         {
+            let style = NSMutableParagraphStyle()
+            style.lineBreakMode = .byTruncatingTail
+            var muAttributes = attributes
+            muAttributes?[NSAttributedString.Key.paragraphStyle] = style
             let textPadding: CGFloat = 2
-            var size = text.size(withAttributes: attributes)
-            size = CGSize(width: size.width + textPadding * 2, height: size.height + textPadding * 2)
+            var size = text.size(withAttributes: muAttributes)
+            /// 文本自适应后加上上下边距后的背景最终的大小
+            size = CGSize(width: size.width + textPadding * 3, height: size.height + textPadding * 2)
             if anchor.x != 0.0 || anchor.y != 0.0
             {
                 // 原始代码
@@ -276,19 +281,35 @@ extension CGContext
 
             drawOffset.x += point.x
             drawOffset.y += point.y
-
-            // 原始代码
-//            (text as NSString).draw(at: drawOffset, withAttributes: attributes)
+            // 左边超出屏幕
+            if drawOffset.x < 0 {
+                drawOffset.x = 10
+            }
+            
             // 自己实现的背景，圆角绘制
-            let rect = CGRect(x: drawOffset.x, y: drawOffset.y, width: size.width, height: size.height)
-            let rect1 = CGRect(x: drawOffset.x + textPadding, y: drawOffset.y + textPadding, width: size.width, height: size.height)
+            var bgRect = CGRect(x: drawOffset.x, y: drawOffset.y, width: size.width, height: size.height)
+            if positionType == .left {
+                // 左边的文本背景和雷达存在重叠，截取最大的宽度，防止重叠
+                if bgRect.maxX >= chartPoint.x {
+                    bgRect = CGRect(x: bgRect.origin.x, y: bgRect.origin.y, width: chartPoint.x - bgRect.origin.x, height: bgRect.height)
+                }
+            } else if positionType == .right {
+                // 右边的文本背景超出屏幕，截取相应的宽度
+                if bgRect.maxX >= chartWidth {
+                    bgRect = CGRect(x: bgRect.origin.x, y: bgRect.origin.y, width: chartWidth - bgRect.origin.x - 5, height: bgRect.height)
+                }
+            } else {
+                //中间不用处理
+                bgRect = CGRect(x: drawOffset.x, y: drawOffset.y, width: size.width, height: size.height)
+            }
+            let textRect = CGRect(x: bgRect.origin.x + textPadding, y: bgRect.origin.y + textPadding, width: bgRect.width - textPadding, height: bgRect.height - textPadding * 2)
             let cornerRadius: CGFloat = 2
-            let clipPath: CGPath = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius).cgPath
+            let clipPath: CGPath = UIBezierPath(roundedRect: bgRect, cornerRadius: cornerRadius).cgPath
             self.setFillColor(UIColor.lightGray.cgColor)
             self.addPath(clipPath)
             self.closePath()
             self.fillPath()
-            (text as NSString).draw(in: rect1, withAttributes: attributes)
+            (text as NSString).draw(in: textRect, withAttributes: muAttributes)
         }
 
         NSUIGraphicsPopContext()

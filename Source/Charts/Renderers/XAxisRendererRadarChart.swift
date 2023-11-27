@@ -12,6 +12,12 @@
 import Foundation
 import CoreGraphics
 
+public enum ItemPositionType {
+    case center
+    case left
+    case right
+}
+
 open class XAxisRendererRadarChart: XAxisRenderer
 {
     @objc open weak var chart: RadarChartView?
@@ -90,7 +96,10 @@ open class XAxisRendererRadarChart: XAxisRenderer
             var distance = CGFloat(chart.yRange) * factor + axis.labelRotatedWidth / 2.0
             // 自定义半径
             distance = CGFloat(chart.yRange) * factor + 14
+            let p = center.moving(distance: distance, atAngle: angle)
             var px: CGFloat = 0
+            var x: CGFloat = 0
+            var positionType = ItemPositionType.center
             // 偶数时有两个在中间
             if isEvenNumber {
                 if i == 0 || i == oneHalf {
@@ -109,32 +118,47 @@ open class XAxisRendererRadarChart: XAxisRenderer
                     px = -(size.width / 2) // 右边
                 }
             }
-            let p = center.moving(distance: distance, atAngle: angle)
-            
+            if px == 0 {
+                positionType = .center
+            } else if px > 0 {
+                positionType = .right
+            } else {
+                positionType = .left
+            }
+            x = p.x + px
             drawLabel(context: context,
                       formattedLabel: label,
-                      x: p.x + px,
+                      x: x,
                       y: p.y - axis.labelRotatedHeight / 2.0,
                       attributes: attributes,
                       anchor: drawLabelAnchor,
-                      angleRadians: labelRotationAngleRadians)
+                      angleRadians: labelRotationAngleRadians,
+                      chartPoint: p,
+                      chartWidth: chart.viewPortHandler.chartWidth,
+                      positionType: positionType)
         }
     }
     
-    @objc open func drawLabel(
+    open func drawLabel(
         context: CGContext,
         formattedLabel: String,
         x: CGFloat,
         y: CGFloat,
         attributes: [NSAttributedString.Key : Any],
         anchor: CGPoint,
-        angleRadians: CGFloat)
+        angleRadians: CGFloat,
+        chartPoint: CGPoint,
+        chartWidth: CGFloat,
+        positionType: ItemPositionType)
     {
         context.drawText(formattedLabel,
                          at: CGPoint(x: x, y: y),
                          anchor: anchor,
                          angleRadians: angleRadians,
-                         attributes: attributes)
+                         attributes: attributes,
+                         chartPoint: chartPoint,
+                         chartWidth: chartWidth,
+                         positionType: positionType)
     }
     
     open override func renderLimitLines(context: CGContext)

@@ -15,24 +15,30 @@ class RadarChartViewController: UIViewController {
 
     var chartView = RadarChartView()
     
-    let activities = ["抬主轮时空速", "抬轮空速与VR差值", "起飞滚转角", "抬主轮时pitch值", "抬主轮时最大俯仰变化率", "抬主轮时俯仰变化率", "抬主轮时地速"]
+    let activities = ["抬主轮时空速asdasd", "抬轮空速与VR差值asdasdasdasd", "起飞滚转角asdasd", "抬主轮时pitch值as", "抬主轮时最大俯仰变化率", "抬主轮时俯仰变化率", "抬主轮时地速asdsadsad"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .white
-        
         //创建折线图组件对象
+        chartView.backgroundColor = .orange
         chartView.webLineWidth = 1
         chartView.innerWebLineWidth = 1
         chartView.rotationEnabled = false
+//        chartView.backgroundColor = .purple
         chartView.setExtraOffsets(left: 0, top: 0, right: 0, bottom: 0)
-        chartView.frame = CGRect(x: 0, y: 100, width: self.view.bounds.width,
-                                 height: self.view.bounds.width - 100)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            chartView.frame = CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width,
+                                     height: 400)
+        } else {
+            chartView.frame = CGRect(x: 0, y: 100, width: UIScreen.main.bounds.width,
+                                     height: 250)
+        }
+        
 //        chartView.backgroundColor = .orange.withAlphaComponent(0.4)
         self.view.addSubview(chartView)
         //维度标签文字
         chartView.xAxis.valueFormatter = self
-//        chartView.legend.enabled = false
         let legend = chartView.legend
         legend.verticalAlignment = .top
         legend.horizontalAlignment = .right
@@ -40,30 +46,23 @@ class RadarChartViewController: UIViewController {
         legend.formLineWidth = 10
         legend.formSize = 18
         legend.form = .line
-        let marker = RadarMarkerView.viewFromXib()!
-        marker.chartView = chartView
-        chartView.marker = marker
+//        let marker = RadarMarkerView.viewFromXib()!
+//        marker.chartView = chartView
+//        chartView.marker = marker
         
         //最小、最大刻度值
-        let yAxis = chartView.yAxis
-        yAxis.drawLabelsEnabled = false //不显示刻度值
-        yAxis.labelFont = .systemFont(ofSize: 10)
-        yAxis.axisMinimum = 0
-        yAxis.axisMaximum = 4
-        yAxis.labelCount = 4
+//        let yAxis = chartView.yAxis
+//        yAxis.drawLabelsEnabled = false //不显示刻度值
+//        yAxis.labelFont = .systemFont(ofSize: 10)
+//        yAxis.axisMinimum = 0
+//        yAxis.axisMaximum = 4
+//        yAxis.labelCount = 4
         
         let xAxis = chartView.xAxis
-        xAxis.axisMinimum = 0
-        xAxis.axisMaximum = 4
-//        xAxis.spaceMin = 0
-        xAxis.labelCount = 4
-        xAxis.wordWrapEnabled = true
-        xAxis.labelRotatedWidth = 0
-//        xAxis.labelPosition = .bottom
         xAxis.labelFont = .systemFont(ofSize: 10)
         xAxis.labelTextColor = .white
 
-    
+        
         let data1: [Double] = [5, 4, 5, 5, 5, 4, 5]
         let data2: [Double] = [5, 5, 0, 5, 5, 5, 5]
         let entries1 = data1.map({RadarChartDataEntry(value: $0)})
@@ -85,11 +84,35 @@ class RadarChartViewController: UIViewController {
         chartDataSet2.drawHighlightCircleEnabled = true //选中后显示圆圈
         chartDataSet2.setDrawHighlightIndicators(false) //选中后不显示十字线
         
+        /// 重置y轴最大值和最小值
+        chartView.yAxis.resetCustomAxisMax()
+        let yAxis = chartView.yAxis
+        yAxis.drawLabelsEnabled = false //不显示刻度值
+        yAxis.labelFont = .systemFont(ofSize: 10)
+        yAxis.axisMinimum = 0
+        yAxis.axisMaximum = 4
+        
         //设置雷达图数据
         chartView.data = chartData
         chartView.animate(xAxisDuration: 1.4, yAxisDuration: 1.4, easingOption: .easeOutBack)
     }
 
+    
+    func listTitle() -> [String] {
+        var list: [String] = []
+        activities.forEach { str in
+            var s = ""
+            if str.count > 8 {
+                s = "\(str.prefix(8))..."
+            } else {
+                s = str
+            }
+            list.append(s)
+        }
+        return list
+    }
+    
+    
     
     func setChartData() {
         return
@@ -119,6 +142,11 @@ class RadarChartViewController: UIViewController {
     }
     
     func optionTapped(_ option: Option) {}
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+//        chartView.center = self.view.center
+    }
 }
 
 extension RadarChartViewController: AxisValueFormatter {
